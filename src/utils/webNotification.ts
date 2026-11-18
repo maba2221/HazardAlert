@@ -31,8 +31,8 @@ export function sendBrowserPushNotification(
   if (Notification.permission === 'granted') {
     try {
       const notification = new Notification(title, {
-        icon: '/favicon.ico',
-        badge: '/favicon.ico',
+        icon: '/favicon.svg',
+        badge: '/favicon.svg',
         tag: 'disaster-emergency-alert',
         requireInteraction: true,
         ...options,

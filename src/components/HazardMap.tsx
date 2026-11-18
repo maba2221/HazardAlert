@@ -9,6 +9,8 @@ interface HazardMapProps {
   onSelectStation: (station: SensorStation) => void;
   selectedStationId?: string;
   epicenterActive?: boolean;
+  currentMagnitude?: number | null;
+  predictedMagnitude?: number | null;
 }
 
 export const HazardMap: React.FC<HazardMapProps> = ({
@@ -18,6 +20,8 @@ export const HazardMap: React.FC<HazardMapProps> = ({
   onSelectStation,
   selectedStationId,
   epicenterActive = false,
+  currentMagnitude,
+  predictedMagnitude,
 }) => {
   const [showFaults, setShowFaults] = useState(true);
   const [showWaves, setShowWaves] = useState(true);
@@ -224,12 +228,12 @@ export const HazardMap: React.FC<HazardMapProps> = ({
 
               {/* Epicenter Magnitude Readout Flag */}
               <g transform="translate(295, 305)">
-                <rect x="0" y="0" width="165" height="42" rx="6" fill="#090d16" stroke="#f43f5e" strokeWidth="1.5" opacity="0.95" />
+                <rect x="0" y="0" width="175" height="42" rx="6" fill="#090d16" stroke="#f43f5e" strokeWidth="1.5" opacity="0.95" />
                 <text x="8" y="16" fill="#fbbf24" fontSize="10" fontFamily="JetBrains Mono" fontWeight="bold">
-                  GEMPA AKTIF: M 7.4
+                  GEMPA AKTIF: M {(currentMagnitude ?? 7.4).toFixed(1)}
                 </text>
                 <text x="8" y="32" fill="#f43f5e" fontSize="9.5" fontFamily="JetBrains Mono" fontWeight="bold">
-                  PREDIKSI PUNCAK: M 7.8
+                  PREDIKSI PUNCAK: M {(predictedMagnitude ?? 7.8).toFixed(1)}
                 </text>
               </g>
 

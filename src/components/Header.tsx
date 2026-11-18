@@ -120,6 +120,50 @@ export const Header: React.FC<HeaderProps> = ({
           </button>
         </div>
       </div>
+
+      {/* Mobile Navigation Bar */}
+      <nav className="flex md:hidden items-center gap-4 px-4 py-2 border-t border-slate-800/80 overflow-x-auto text-xs font-medium text-slate-400">
+        <button
+          onClick={() => setActiveTab('telemetry')}
+          className={`whitespace-nowrap shrink-0 pb-0.5 ${
+            activeTab === 'telemetry' ? 'text-cyan-400 font-semibold border-b border-cyan-400' : 'hover:text-slate-200'
+          }`}
+        >
+          Telemetri Sensor
+        </button>
+        <button
+          onClick={() => setActiveTab('map')}
+          className={`whitespace-nowrap shrink-0 pb-0.5 ${
+            activeTab === 'map' ? 'text-cyan-400 font-semibold border-b border-cyan-400' : 'hover:text-slate-200'
+          }`}
+        >
+          Peta Bahaya GIS
+        </button>
+        <button
+          onClick={() => setActiveTab('simulation')}
+          className={`whitespace-nowrap shrink-0 pb-0.5 ${
+            activeTab === 'simulation' ? 'text-cyan-400 font-semibold border-b border-cyan-400' : 'hover:text-slate-200'
+          }`}
+        >
+          Simulasi Krisis
+        </button>
+        <button
+          onClick={() => setActiveTab('broadcast')}
+          className={`whitespace-nowrap shrink-0 pb-0.5 ${
+            activeTab === 'broadcast' ? 'text-cyan-400 font-semibold border-b border-cyan-400' : 'hover:text-slate-200'
+          }`}
+        >
+          Pusat Notifikasi Push
+        </button>
+        <button
+          onClick={() => setActiveTab('architecture')}
+          className={`whitespace-nowrap shrink-0 pb-0.5 ${
+            activeTab === 'architecture' ? 'text-cyan-400 font-semibold border-b border-cyan-400' : 'hover:text-slate-200'
+          }`}
+        >
+          Arsitektur PGTC
+        </button>
+      </nav>
     </header>
   );
 };

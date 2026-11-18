@@ -2,7 +2,6 @@
 class EmergencyAudioEngine {
   private ctx: AudioContext | null = null;
   private isMuted: boolean = false;
-  private currentSource: AudioBufferSourceNode | null = null;
   private activeOscillators: OscillatorNode[] = [];
 
   private initContext() {
@@ -108,25 +107,36 @@ class EmergencyAudioEngine {
 
   // Play audio/wav base64 received from Gemini TTS endpoint
   public playTtsBase64(base64Data: string, onEnd?: () => void) {
-    if (this.isMuted) return;
+    if (this.isMuted) {
+      onEnd?.();
+      return;
+    }
     try {
       this.stopAll();
       const audio = new Audio(`data:audio/wav;base64,${base64Data}`);
       audio.volume = 0.9;
       audio.onended = () => {
-        if (onEnd) onEnd();
+        onEnd?.();
+      };
+      audio.onerror = () => {
+        onEnd?.();
       };
       audio.play().catch((err) => {
         console.warn('TTS playback prevented by browser policy:', err);
+        onEnd?.();
       });
     } catch (e) {
       console.warn('Audio play error:', e);
+      onEnd?.();
     }
   }
 
   // Native Web Speech API fallback when Gemini TTS isn't configured
   public speakFallbackText(text: string, onEnd?: () => void) {
-    if (this.isMuted) return;
+    if (this.isMuted) {
+      onEnd?.();
+      return;
+    }
     if (typeof window !== 'undefined' && 'speechSynthesis' in window) {
       try {
         window.speechSynthesis.cancel();
@@ -134,14 +144,15 @@ class EmergencyAudioEngine {
         utterance.lang = 'id-ID';
         utterance.rate = 1.05;
         utterance.pitch = 1.1;
-        if (onEnd) {
-          utterance.onend = onEnd;
-        }
+        utterance.onend = () => onEnd?.();
+        utterance.onerror = () => onEnd?.();
         window.speechSynthesis.speak(utterance);
+        return;
       } catch (err) {
         console.warn('Speech synthesis fallback failed:', err);
       }
     }
+    onEnd?.();
   }
 
   public stopAll() {

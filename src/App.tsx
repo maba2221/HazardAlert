@@ -20,7 +20,8 @@ import {
   getNotificationPermissionStatus,
   sendBrowserPushNotification,
 } from './utils/webNotification';
-import { Activity, ShieldAlert, Cpu, Bell, Radio, CheckCircle, RefreshCw } from 'lucide-react';
+import { Activity, Cpu, RefreshCw } from 'lucide-react';
+import emergencyOpsImg from './assets/images/emergency_operations_room_1793171131343.jpg';
 
 export default function App() {
   const [stations, setStations] = useState<SensorStation[]>(INITIAL_STATIONS);
@@ -71,17 +72,23 @@ export default function App() {
   };
 
   // Run AI Telemetry Analysis via Gemini 3.8 Flash endpoint
-  const handleRunAiAnalysis = useCallback(async () => {
+  const handleRunAiAnalysis = useCallback(async (
+    overrideStations?: SensorStation[],
+    overrideScenario?: DisasterScenario
+  ) => {
     setIsAnalyzing(true);
     try {
-      const activeScen = CRISIS_SCENARIOS.find((s) => s.id === activeScenarioId);
+      const targetStations = overrideStations || stations;
+      const activeScen = overrideScenario || CRISIS_SCENARIOS.find((s) => s.id === activeScenarioId);
+      const isTriggered = targetStations.some((s) => s.value >= s.thresholdAwas);
+
       const res = await fetch('/api/analyze-telemetry', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          stations,
+          stations: targetStations,
           scenarioName: activeScen?.title || 'Pengawasan Real-Time',
-          ruleTriggered,
+          ruleTriggered: isTriggered,
         }),
       });
 
@@ -89,7 +96,7 @@ export default function App() {
       const data = await res.json();
 
       const newAssessment: DisasterAssessment = {
-        alertLevel: data.alertLevel || (ruleTriggered ? 'AWAS' : 'NORMAL'),
+        alertLevel: data.alertLevel || (isTriggered ? 'AWAS' : 'NORMAL'),
         hazardType: data.hazardType || 'MULTI_HAZARD',
         confidenceScore: data.confidenceScore || 92,
         estimatedLeadTimeToImpactSeconds: data.estimatedLeadTimeToImpactSeconds || 45,
@@ -152,7 +159,7 @@ export default function App() {
     } finally {
       setIsAnalyzing(false);
     }
-  }, [stations, activeScenarioId, ruleTriggered, isMuted]);
+  }, [stations, activeScenarioId, isMuted]);
 
   // Lead time countdown effect
   useEffect(() => {
@@ -216,27 +223,25 @@ export default function App() {
   const handleSelectScenario = (scenario: DisasterScenario) => {
     setActiveScenarioId(scenario.id);
 
-    setStations((prev) =>
-      prev.map((st) => {
-        if (scenario.simulatedOverrides[st.id] !== undefined) {
-          const targetVal = scenario.simulatedOverrides[st.id];
-          return {
-            ...st,
-            value: targetVal,
-            history: [...st.history.slice(-11), targetVal],
-            trend: targetVal > st.baseline ? 'rising' : 'stable',
-            isAnomaly: targetVal >= st.thresholdWaspada,
-          };
-        }
-        return st;
-      })
-    );
+    const updatedStations = stations.map((st) => {
+      if (scenario.simulatedOverrides[st.id] !== undefined) {
+        const targetVal = scenario.simulatedOverrides[st.id];
+        return {
+          ...st,
+          value: targetVal,
+          history: [...st.history.slice(-11), targetVal],
+          trend: (targetVal > st.baseline ? 'rising' : 'stable') as 'rising' | 'falling' | 'stable',
+          isAnomaly: targetVal >= st.thresholdWaspada,
+        };
+      }
+      return st;
+    });
 
-    // Automatically trigger AI analysis when a crisis scenario is selected
+    setStations(updatedStations);
+
+    // Automatically trigger AI analysis with fresh stations (avoiding stale closure)
     if (scenario.id !== 'scen-nominal') {
-      setTimeout(() => {
-        handleRunAiAnalysis();
-      }, 300);
+      handleRunAiAnalysis(updatedStations, scenario);
     } else {
       // Reset assessment to nominal
       setAssessment(null);
@@ -338,7 +343,7 @@ export default function App() {
             {/* Tactical Command Center Visual with Fallback Container */}
             <div className="lg:col-span-4 relative rounded-xl overflow-hidden border border-slate-800 h-32 sm:h-36 bg-slate-900 shadow-md">
               <img
-                src="/src/assets/images/emergency_operations_room_1793171131343.jpg"
+                src={emergencyOpsImg}
                 alt="Tactical disaster command center display"
                 referrerPolicy="no-referrer"
                 className="w-full h-full object-cover"
@@ -386,7 +391,7 @@ export default function App() {
 
               <div className="flex items-center gap-2">
                 <button
-                  onClick={handleRunAiAnalysis}
+                  onClick={() => handleRunAiAnalysis()}
                   disabled={isAnalyzing}
                   className="px-3.5 py-2 rounded-lg text-xs font-semibold bg-cyan-600 text-slate-950 hover:bg-cyan-500 font-bold transition-colors flex items-center gap-1.5"
                 >
@@ -424,6 +429,8 @@ export default function App() {
                 onSelectStation={(st) => setSelectedStation(st)}
                 selectedStationId={selectedStation?.id}
                 epicenterActive={alertLevel === 'AWAS'}
+                currentMagnitude={assessment?.earthquakeData?.currentMagnitude}
+                predictedMagnitude={assessment?.earthquakeData?.predictedMagnitude}
               />
             </div>
           </div>
@@ -450,6 +457,8 @@ export default function App() {
               onSelectStation={(st) => setSelectedStation(st)}
               selectedStationId={selectedStation?.id}
               epicenterActive={alertLevel === 'AWAS'}
+              currentMagnitude={assessment?.earthquakeData?.currentMagnitude}
+              predictedMagnitude={assessment?.earthquakeData?.predictedMagnitude}
             />
           </div>
         )}
@@ -466,7 +475,7 @@ export default function App() {
             onToggleStreaming={() => setIsStreaming(!isStreaming)}
             streamSpeed={streamSpeed}
             onChangeStreamSpeed={setStreamSpeed}
-            onRunAiAnalysis={handleRunAiAnalysis}
+            onRunAiAnalysis={() => handleRunAiAnalysis()}
             isAnalyzing={isAnalyzing}
             ruleTriggered={ruleTriggered}
           />
@@ -480,6 +489,7 @@ export default function App() {
             onTriggerRealBrowserPush={handleTriggerRealBrowserPush}
             permissionStatus={notificationPermission}
             onRequestPermission={handleRequestPermission}
+            onNavigateToMap={() => setActiveTab('map')}
           />
         )}
 

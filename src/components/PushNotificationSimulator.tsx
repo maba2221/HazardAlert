@@ -18,6 +18,7 @@ interface PushNotificationSimulatorProps {
   onTriggerRealBrowserPush: () => void;
   permissionStatus: NotificationPermission;
   onRequestPermission: () => void;
+  onNavigateToMap?: () => void;
 }
 
 export const PushNotificationSimulator: React.FC<PushNotificationSimulatorProps> = ({
@@ -26,6 +27,7 @@ export const PushNotificationSimulator: React.FC<PushNotificationSimulatorProps>
   onTriggerRealBrowserPush,
   permissionStatus,
   onRequestPermission,
+  onNavigateToMap,
 }) => {
   const [acknowledged, setAcknowledged] = useState(false);
 
@@ -107,7 +109,7 @@ export const PushNotificationSimulator: React.FC<PushNotificationSimulatorProps>
                   {acknowledged ? 'Sudah Dikonfirmasi ✓' : 'Konfirmasi Bahaya'}
                 </button>
                 <button
-                  onClick={() => alert('Membuka rute evakuasi terdekat di Google Maps / GIS.')}
+                  onClick={() => onNavigateToMap?.()}
                   className="px-2.5 py-1.5 text-[10px] font-medium rounded-lg bg-black/40 text-slate-300 hover:text-white"
                 >
                   Peta Evakuasi
