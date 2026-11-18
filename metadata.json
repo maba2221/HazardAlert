@@ -1,0 +1,8 @@
+{
+  "name": "GeoVigil Nusantara - AI Early Warning System",
+  "description": "Platform monitoring sensor real-time IoT (seismik, hidrologi, cuaca, tiltmeter, buoy DART), analisis ancaman algoritma & AI Gemini, serta sistem push notification darurat instan multi-kanal.",
+  "requestFramePermissions": ["notifications"],
+  "majorCapabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
+}
